@@ -3,6 +3,7 @@ mod db;
 mod dtos;
 mod error;
 mod models;
+mod utils;
 
 use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use config::Config;
