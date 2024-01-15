@@ -1,12 +1,13 @@
+mod config;
+mod db;
+mod error;
+mod models;
+
 use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use config::Config;
 use db::DBClient;
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
-
-mod config;
-mod db;
-mod models;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
