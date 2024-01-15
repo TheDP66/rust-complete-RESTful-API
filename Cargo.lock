@@ -1957,7 +1957,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-complete-RESTful-API"
+name = "rust-complete-restful-api"
 version = "0.1.0"
 dependencies = [
  "actix-cors",
