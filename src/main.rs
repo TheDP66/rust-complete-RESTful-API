@@ -2,7 +2,9 @@ mod config;
 mod db;
 mod dtos;
 mod error;
+mod extractors;
 mod models;
+mod scopes;
 mod utils;
 
 use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
