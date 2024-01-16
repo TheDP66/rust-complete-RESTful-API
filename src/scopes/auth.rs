@@ -1,6 +1,7 @@
 use actix_web::{
-    cookie::time::Duration as ActixWebDuration, cookie::Cookie, web, HttpResponse, Scope,
+    cookie::time::Duration as ActixWebDuration, cookie::Cookie, web, HttpResponse, Responder, Scope,
 };
+use serde_json::json;
 use validator::Validate;
 
 use crate::{
@@ -10,15 +11,10 @@ use crate::{
         UserResponseDto,
     },
     error::{ErrorMessage, HttpError},
+    extractors::auth::RequireAuth,
     utils::{password, token},
     AppState,
 };
-
-pub fn auth_scope() -> Scope {
-    web::scope("/api/auth")
-        .route("/register", web::post().to(register))
-        .route("/login", web::post().to(login))
-}
 
 pub async fn register(
     app_state: web::Data<AppState>,
@@ -96,4 +92,23 @@ pub async fn login(
     } else {
         Err(HttpError::unauthorized(ErrorMessage::WrongCredentials))
     }
+}
+
+pub async fn logout() -> impl Responder {
+    let cookie = Cookie::build("token", "")
+        .path("/")
+        .max_age(ActixWebDuration::new(-1, 0))
+        .http_only(true)
+        .finish();
+
+    HttpResponse::Ok().cookie(cookie).json(json!({
+        "status":"success"
+    }))
+}
+
+pub fn auth_scope() -> Scope {
+    web::scope("/api/auth")
+        .route("/register", web::post().to(register))
+        .route("/login", web::post().to(login))
+        .route("/logout", web::post().to(logout).wrap(RequireAuth))
 }
