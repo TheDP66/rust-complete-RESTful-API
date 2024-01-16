@@ -1,6 +1,9 @@
 dev:
 	docker-compose up -d
 
+dev-noapi:
+	docker-compose -f docker-compose.no_api.yml up
+
 dev-down:
 	docker-compose down
 
