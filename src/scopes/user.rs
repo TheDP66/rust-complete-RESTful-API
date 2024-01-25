@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Responder, Scope};
+use actix_web::{web, HttpResponse, Scope};
 use validator::Validate;
 
 use crate::{

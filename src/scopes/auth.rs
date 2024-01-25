@@ -52,7 +52,7 @@ pub async fn register(
     }
 }
 
-pub async fn registerAdmin(
+pub async fn register_admin(
     app_state: web::Data<AppState>,
     body: web::Json<RegisterUserDto>,
 ) -> Result<HttpResponse, HttpError> {
@@ -148,7 +148,7 @@ pub fn auth_scope() -> Scope {
         .route(
             "/register/admin",
             web::post()
-                .to(registerAdmin)
+                .to(register_admin)
                 .wrap(RequireAuth::allowed_roles(vec![UserRole::Admin])),
         )
         .route("/login", web::post().to(login))
