@@ -12,6 +12,7 @@ use crate::{
     },
     error::{ErrorMessage, HttpError},
     extractors::auth::RequireAuth,
+    models::UserRole,
     utils::{password, token},
     AppState,
 };
@@ -29,6 +30,41 @@ pub async fn register(
     let result = app_state
         .db_client
         .save_user(&body.name, &body.email, &hashed_password)
+        .await;
+
+    match result {
+        Ok(user) => Ok(HttpResponse::Created().json(UserResponseDto {
+            status: "success".to_string(),
+            data: UserData {
+                user: FilterUserDto::filter_user(&user),
+            },
+        })),
+        Err(sqlx::Error::Database(db_err)) => {
+            if db_err.is_unique_violation() {
+                Err(HttpError::unique_constraint_voilation(
+                    ErrorMessage::EmailExist,
+                ))
+            } else {
+                Err(HttpError::server_error(db_err.to_string()))
+            }
+        }
+        Err(e) => Err(HttpError::server_error(e.to_string())),
+    }
+}
+
+pub async fn register_admin(
+    app_state: web::Data<AppState>,
+    body: web::Json<RegisterUserDto>,
+) -> Result<HttpResponse, HttpError> {
+    body.validate()
+        .map_err(|e| HttpError::bad_request(e.to_string()))?;
+
+    let hashed_password =
+        password::hash(&body.password).map_err(|e| HttpError::server_error(e.to_string()))?;
+
+    let result = app_state
+        .db_client
+        .save_admin_user(&body.name, &body.email, &hashed_password)
         .await;
 
     match result {
@@ -109,6 +145,19 @@ pub async fn logout() -> impl Responder {
 pub fn auth_scope() -> Scope {
     web::scope("/api/auth")
         .route("/register", web::post().to(register))
+        .route(
+            "/register/admin",
+            web::post()
+                .to(register_admin)
+                .wrap(RequireAuth::allowed_roles(vec![UserRole::Admin])),
+        )
         .route("/login", web::post().to(login))
-        .route("/logout", web::post().to(logout).wrap(RequireAuth))
+        .route(
+            "/logout",
+            web::post().to(logout).wrap(RequireAuth::allowed_roles(vec![
+                UserRole::User,
+                UserRole::Moderator,
+                UserRole::Admin,
+            ])),
+        )
 }

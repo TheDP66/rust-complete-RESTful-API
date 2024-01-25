@@ -7,7 +7,10 @@ mod models;
 mod scopes;
 mod utils;
 
-use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
+use actix_cors::Cors;
+use actix_web::{
+    get, http::header, middleware::Logger, web, App, HttpResponse, HttpServer, Responder,
+};
 use config::Config;
 use db::DBClient;
 use dotenv::dotenv;
@@ -49,10 +52,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:3000")
+            .allowed_origin("http://localhost:8000")
+            .allowed_origin("https://rust.codevoweb.com")
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![
+                header::CONTENT_TYPE,
+                header::AUTHORIZATION,
+                header::ACCEPT,
+            ])
+            .supports_credentials();
+
         App::new()
             .app_data(web::Data::new(app_state.clone()))
+            .wrap(cors)
             .wrap(Logger::default())
             .service(health_checker_handler)
+            .service(scopes::auth::auth_scope())
+            .service(scopes::user::users_scope())
     })
     .bind(("0.0.0.0", config.port))?
     .run()
